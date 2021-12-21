@@ -1,0 +1,179 @@
+---
+title: "Results for CA Post-Vaccine Paper"
+author: "Mathew Kiang"
+date: "9/10/2021"
+output: 
+  html_document:
+    code_folding: 'hide'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(error = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+## Set up
+
+```{r, results='hide'}
+library(tidyverse)
+library(here)
+library(DT)
+library(knitr)
+library(kableExtra)
+```
+
+```{r}
+prop_df <- readRDS(here("data_private", "proportion_vaccinated.RDS"))
+age_std_rates <- readRDS(here("data_private", "joinpoint_results.RDS")) %>%
+  filter(time_period == "vaccine") %>%
+  mutate(n_deaths = ifelse(n_deaths < 10, "<10", sprintf("%i", n_deaths)))
+```
+
+## Observed and modeled age-standardized mortality rates by age group and race/ethnicity
+
+```{r}
+age_std_rates %>%
+    transmute(
+        race_cat,
+        age_cat,
+        n_deaths,
+        date_start,
+        # date,
+        obs_rate = sprintf(
+            "%0.2f (%0.2f, %0.2f)",
+            round(rate, 2),
+            round(rate - 1.96 * sqrt(var), 2),
+            round(rate + 1.96 * sqrt(var), 2)
+        ),
+        model_rate = sprintf(
+            "%0.2f (%0.2f, %0.2f)",
+            round(modeled_rate, 2),
+            round(modeled_rate - 1.96 * model_se, 2),
+            round(modeled_rate + 1.96 * model_se, 2)
+        )
+    ) %>%
+    arrange(race_cat, age_cat, date_start) %>%
+    DT::datatable(
+        rownames = FALSE,
+        colnames = c(
+            "Race/Ethnicity",
+            "Age Bin",
+            "Deaths (N)",
+            "Week Start",
+            # "Week End",
+            "Observed Rate",
+            "Modeled Rate"
+        ),
+        filter = "top"
+    )
+```
+
+## Joinpoint results for weekly percent change
+
+Below are the joinpoint results presented as "segments" such that each time series is broken up into some number of distinct linear (on the log scale) trends. For example, the first two rows would be interpreted as "For the total population, the age-standardized mortality rate across all age groups decreased 25% per week (95% CI: -27, -24; p < .001) from Jan 20 to March 23, and then this rate of decrease decelerated to 10% per week (95% CI: -11, -8; p < .001) until June 22."
+
+Note that it is possible for some models to have 0 joinpoints (i.e., segment is 0), which is just a linear model. A total of 6 segments (i.e., segment 0 to 5) is possible but I don't remember seeing one. 
+
+```{r}
+age_std_rates %>%
+    group_by(race_cat,
+             age_cat,
+             segment) %>%
+    filter(date_start == min(date_start)) %>%
+    transmute(
+        race_cat,
+        age_cat,
+        segment,
+        date_start,
+        wpc = sprintf(
+            "%0.1f (%0.1f, %0.1f)",
+            round(wpc, 1),
+            round(wpc_lower, 1),
+            round(wpc_upper, 1)
+        ),
+        p_val = wpc_pval
+    ) %>%
+    arrange(race_cat, age_cat, date_start) %>%
+    DT::datatable(
+        rownames = FALSE,
+        colnames = c(
+            "Race/Ethnicity",
+            "Age Bin",
+            "Joinpoint Segment",
+            "Week Start",
+            "Weekly percent change", 
+            "P-value"
+        ),
+        filter = "top"
+    )
+```
+
+## Average weekly percent change
+
+The average weekly percent change is the weighted average of the weekly percent change where the weights are the number of weeks in each segment above. This basically describes the average change over the entire time period of observation, after we factor in the smoothing (and different variances/sample size by week). 
+
+```{r}
+age_std_rates %>% 
+    group_by(race_cat, age_cat) %>%
+    filter(date == min(date)) %>%
+    transmute(
+        race_cat,
+        age_cat,
+        average_wpc = sprintf(
+            "%0.1f (%0.1f, %0.1f)",
+            round(average_wpc, 1),
+            round(average_wpc_lower, 1),
+            round(average_wpc_upper, 1)
+        ),
+        average_wpc_pval
+    ) %>%
+    arrange(age_cat, race_cat) %>%
+    DT::datatable(
+        rownames = FALSE,
+        colnames = c(
+            "Race/Ethnicity",
+            "Age Bin",
+            "Average Weekly percent change", 
+            "P-value"
+        ),
+        filter = "top"
+    )
+```
+
+## Proportion of deaths per week
+
+For any given week, this table will tell you the number of observed deaths in each race/ethnicity and age bin as well as the proportion of all deaths represented by that race/ethnicity and the linear prediction (and 95% CI). 
+
+```{r}
+prop_df %>%
+    transmute(
+        race_cat,
+        age_bin,
+        date_start,
+        n_deaths = ifelse(covid_deaths < 10, "<10", sprintf("%i", covid_deaths)),
+        observed_prop = sprintf("%0.3f", round(covid_prop, 3)),
+        model_prop = sprintf(
+            "%0.3f (%0.3f, %0.3f)",
+            round(lm_mean, 3),
+            round(lm_lower, 3),
+            round(lm_upper, 3)
+        )
+    ) %>% 
+    arrange(race_cat, 
+            age_bin) %>%
+    DT::datatable(
+        rownames = FALSE,
+        colnames = c(
+            "Race/Ethnicity",
+            "Age Bin",
+            "Week Start", 
+             "Deaths (N)",
+            "Observed prop.",
+            "Modeled prop."
+        ),
+        filter = "top"
+    )
+```
+
