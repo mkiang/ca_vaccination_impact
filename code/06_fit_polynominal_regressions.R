@@ -9,7 +9,7 @@ library(tidyverse)
 
 ## Data ----
 age_spec_rates <-
-    readRDS(here::here("data", "age_specific_rates.RDS")) %>%
+    readRDS(here::here("data_private", "age_specific_rates.RDS")) %>%
     dplyr::filter(
         date_start >= as.Date("2020-03-01"),
         race != "other",
