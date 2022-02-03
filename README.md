@@ -5,17 +5,14 @@
 
 <img src="./plots/fig01_age_groups_std_rates.jpg" width="700px" style="display: block; margin: auto;" />
 
-This is reproducible code for our forthcoming paper, [“Recent Shifts in
+This is reproducible code for our recent *Journal of General Internal Medicine* paper, [“Recent Shifts in
 Racial/Ethnic Disparities in COVID-19 Mortality in the Vaccination
-Period in California”](TODO), which uses **restricted-access**,
+Period in California”](https://link.springer.com/article/10.1007/s11606-021-07380-6), which uses **restricted-access**,
 decedent-level death certificate data from the California Department of
 Public Health (CDPH) to systematically examine racial/ethnic disparities
 in COVID-19 deaths during the vaccination period. The full citation is:
 
-> Riley AR\*, Kiang MV\*, Chen Y-H, Bibbins-Domingo K, and Glymour MM.
-> Recent Shifts in Racial/Ethnic Disparities in COVID-19 Mortality in
-> the Vaccination Period in California. Forthcoming. \*Authors
-> contributed equally.
+> Riley AR†, Kiang MV†, Chen Y-H, Bibbins-Domingo K, & Glymour MM, Recent shifts in racial/ethnic disparities in COVID-19 mortality in the vaccination period in California, Journal of General Internal Medicine (February 2022), doi: 10.1007/s11606-021-07380-6. †First authors contributed equally.
 
 ## Issues
 
